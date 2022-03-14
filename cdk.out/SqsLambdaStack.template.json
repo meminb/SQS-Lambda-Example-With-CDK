@@ -1,0 +1,417 @@
+{
+  "Resources": {
+    "FirstQueue19075403": {
+      "Type": "AWS::SQS::Queue",
+      "Properties": {
+        "QueueName": "TheFirstQueue",
+        "VisibilityTimeout": 30
+      },
+      "UpdateReplacePolicy": "Delete",
+      "DeletionPolicy": "Delete",
+      "Metadata": {
+        "aws:cdk:path": "SqsLambdaStack/FirstQueue/Resource"
+      }
+    },
+    "SecondQueueD5D7042B": {
+      "Type": "AWS::SQS::Queue",
+      "Properties": {
+        "QueueName": "TheSecondQueue",
+        "VisibilityTimeout": 30
+      },
+      "UpdateReplacePolicy": "Delete",
+      "DeletionPolicy": "Delete",
+      "Metadata": {
+        "aws:cdk:path": "SqsLambdaStack/SecondQueue/Resource"
+      }
+    },
+    "lambdaFunction1ServiceRole3E99BEA7": {
+      "Type": "AWS::IAM::Role",
+      "Properties": {
+        "AssumeRolePolicyDocument": {
+          "Statement": [
+            {
+              "Action": "sts:AssumeRole",
+              "Effect": "Allow",
+              "Principal": {
+                "Service": "lambda.amazonaws.com"
+              }
+            }
+          ],
+          "Version": "2012-10-17"
+        },
+        "ManagedPolicyArns": [
+          {
+            "Fn::Join": [
+              "",
+              [
+                "arn:",
+                {
+                  "Ref": "AWS::Partition"
+                },
+                ":iam::aws:policy/service-role/AWSLambdaBasicExecutionRole"
+              ]
+            ]
+          }
+        ]
+      },
+      "Metadata": {
+        "aws:cdk:path": "SqsLambdaStack/lambdaFunction1/ServiceRole/Resource"
+      }
+    },
+    "lambdaFunction1ServiceRoleDefaultPolicy6A5285C7": {
+      "Type": "AWS::IAM::Policy",
+      "Properties": {
+        "PolicyDocument": {
+          "Statement": [
+            {
+              "Action": "*",
+              "Effect": "Allow",
+              "Resource": {
+                "Fn::GetAtt": [
+                  "SecondQueueD5D7042B",
+                  "Arn"
+                ]
+              }
+            },
+            {
+              "Action": [
+                "sqs:ReceiveMessage",
+                "sqs:ChangeMessageVisibility",
+                "sqs:GetQueueUrl",
+                "sqs:DeleteMessage",
+                "sqs:GetQueueAttributes"
+              ],
+              "Effect": "Allow",
+              "Resource": {
+                "Fn::GetAtt": [
+                  "FirstQueue19075403",
+                  "Arn"
+                ]
+              }
+            }
+          ],
+          "Version": "2012-10-17"
+        },
+        "PolicyName": "lambdaFunction1ServiceRoleDefaultPolicy6A5285C7",
+        "Roles": [
+          {
+            "Ref": "lambdaFunction1ServiceRole3E99BEA7"
+          }
+        ]
+      },
+      "Metadata": {
+        "aws:cdk:path": "SqsLambdaStack/lambdaFunction1/ServiceRole/DefaultPolicy/Resource"
+      }
+    },
+    "lambdaFunction187193E69": {
+      "Type": "AWS::Lambda::Function",
+      "Properties": {
+        "Code": {
+          "S3Bucket": {
+            "Fn::Sub": "cdk-hnb659fds-assets-${AWS::AccountId}-${AWS::Region}"
+          },
+          "S3Key": "e1bb1158005b3e7a2cff5e161f7975530af2a10c5fb16d586bb80f313057a7a5.zip"
+        },
+        "Role": {
+          "Fn::GetAtt": [
+            "lambdaFunction1ServiceRole3E99BEA7",
+            "Arn"
+          ]
+        },
+        "Environment": {
+          "Variables": {
+            "THUNDRA_AGENT_LAMBDA_HANDLER": "handler.handler",
+            "THUNDRA_APIKEY": "f1b50fe3-ec46-4fb7-a560-fecaf1985266",
+            "SECOND_QUEUE_URL": {
+              "Ref": "SecondQueueD5D7042B"
+            }
+          }
+        },
+        "FunctionName": "DemoLambdaFunction",
+        "Handler": "thundra_handler.wrapper",
+        "Layers": [
+          {
+            "Fn::Join": [
+              "",
+              [
+                "arn:aws:lambda:",
+                {
+                  "Ref": "AWS::Region"
+                },
+                ":269863060030:layer:thundra-lambda-node-layer:96"
+              ]
+            ]
+          }
+        ],
+        "Runtime": "nodejs12.x",
+        "Timeout": 30
+      },
+      "DependsOn": [
+        "lambdaFunction1ServiceRoleDefaultPolicy6A5285C7",
+        "lambdaFunction1ServiceRole3E99BEA7"
+      ],
+      "Metadata": {
+        "aws:cdk:path": "SqsLambdaStack/lambdaFunction1/Resource",
+        "aws:asset:path": "asset.e1bb1158005b3e7a2cff5e161f7975530af2a10c5fb16d586bb80f313057a7a5",
+        "aws:asset:is-bundled": false,
+        "aws:asset:property": "Code"
+      }
+    },
+    "lambdaFunction1SqsEventSourceSqsLambdaStackFirstQueue7297416BDD270B24": {
+      "Type": "AWS::Lambda::EventSourceMapping",
+      "Properties": {
+        "FunctionName": {
+          "Ref": "lambdaFunction187193E69"
+        },
+        "BatchSize": 1,
+        "EventSourceArn": {
+          "Fn::GetAtt": [
+            "FirstQueue19075403",
+            "Arn"
+          ]
+        }
+      },
+      "Metadata": {
+        "aws:cdk:path": "SqsLambdaStack/lambdaFunction1/SqsEventSource:SqsLambdaStackFirstQueue7297416B/Resource"
+      }
+    },
+    "CDKMetadata": {
+      "Type": "AWS::CDK::Metadata",
+      "Properties": {
+        "Analytics": "v2:deflate64:H4sIAAAAAAAA/2VPOw7CMAw9C3tqaGFhpAg2JCgHQCE1yLRNCk5AKOrdSQLqwvR+0vNzAXkBs4l8cabqJmvpDP5opWpEsE6e7wz+4NChWF90IoNoZXeuJfit08qS0TEa+eaJ2h6Neyjcyb4nfY3xvzsIkh34yrSpOuHetKTeUX7ZIHh+ksxoGVYRgobSqQZtKTksqZBTp0hp2H393RuDwNdG1xS3DUKbGuHG02e+gHwZ/r4xUfZw2lKHUH3xA8VE8EcTAQAA"
+      },
+      "Metadata": {
+        "aws:cdk:path": "SqsLambdaStack/CDKMetadata/Default"
+      },
+      "Condition": "CDKMetadataAvailable"
+    }
+  },
+  "Conditions": {
+    "CDKMetadataAvailable": {
+      "Fn::Or": [
+        {
+          "Fn::Or": [
+            {
+              "Fn::Equals": [
+                {
+                  "Ref": "AWS::Region"
+                },
+                "af-south-1"
+              ]
+            },
+            {
+              "Fn::Equals": [
+                {
+                  "Ref": "AWS::Region"
+                },
+                "ap-east-1"
+              ]
+            },
+            {
+              "Fn::Equals": [
+                {
+                  "Ref": "AWS::Region"
+                },
+                "ap-northeast-1"
+              ]
+            },
+            {
+              "Fn::Equals": [
+                {
+                  "Ref": "AWS::Region"
+                },
+                "ap-northeast-2"
+              ]
+            },
+            {
+              "Fn::Equals": [
+                {
+                  "Ref": "AWS::Region"
+                },
+                "ap-south-1"
+              ]
+            },
+            {
+              "Fn::Equals": [
+                {
+                  "Ref": "AWS::Region"
+                },
+                "ap-southeast-1"
+              ]
+            },
+            {
+              "Fn::Equals": [
+                {
+                  "Ref": "AWS::Region"
+                },
+                "ap-southeast-2"
+              ]
+            },
+            {
+              "Fn::Equals": [
+                {
+                  "Ref": "AWS::Region"
+                },
+                "ca-central-1"
+              ]
+            },
+            {
+              "Fn::Equals": [
+                {
+                  "Ref": "AWS::Region"
+                },
+                "cn-north-1"
+              ]
+            },
+            {
+              "Fn::Equals": [
+                {
+                  "Ref": "AWS::Region"
+                },
+                "cn-northwest-1"
+              ]
+            }
+          ]
+        },
+        {
+          "Fn::Or": [
+            {
+              "Fn::Equals": [
+                {
+                  "Ref": "AWS::Region"
+                },
+                "eu-central-1"
+              ]
+            },
+            {
+              "Fn::Equals": [
+                {
+                  "Ref": "AWS::Region"
+                },
+                "eu-north-1"
+              ]
+            },
+            {
+              "Fn::Equals": [
+                {
+                  "Ref": "AWS::Region"
+                },
+                "eu-south-1"
+              ]
+            },
+            {
+              "Fn::Equals": [
+                {
+                  "Ref": "AWS::Region"
+                },
+                "eu-west-1"
+              ]
+            },
+            {
+              "Fn::Equals": [
+                {
+                  "Ref": "AWS::Region"
+                },
+                "eu-west-2"
+              ]
+            },
+            {
+              "Fn::Equals": [
+                {
+                  "Ref": "AWS::Region"
+                },
+                "eu-west-3"
+              ]
+            },
+            {
+              "Fn::Equals": [
+                {
+                  "Ref": "AWS::Region"
+                },
+                "me-south-1"
+              ]
+            },
+            {
+              "Fn::Equals": [
+                {
+                  "Ref": "AWS::Region"
+                },
+                "sa-east-1"
+              ]
+            },
+            {
+              "Fn::Equals": [
+                {
+                  "Ref": "AWS::Region"
+                },
+                "us-east-1"
+              ]
+            },
+            {
+              "Fn::Equals": [
+                {
+                  "Ref": "AWS::Region"
+                },
+                "us-east-2"
+              ]
+            }
+          ]
+        },
+        {
+          "Fn::Or": [
+            {
+              "Fn::Equals": [
+                {
+                  "Ref": "AWS::Region"
+                },
+                "us-west-1"
+              ]
+            },
+            {
+              "Fn::Equals": [
+                {
+                  "Ref": "AWS::Region"
+                },
+                "us-west-2"
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  },
+  "Parameters": {
+    "BootstrapVersion": {
+      "Type": "AWS::SSM::Parameter::Value<String>",
+      "Default": "/cdk-bootstrap/hnb659fds/version",
+      "Description": "Version of the CDK Bootstrap resources in this environment, automatically retrieved from SSM Parameter Store. [cdk:skip]"
+    }
+  },
+  "Rules": {
+    "CheckBootstrapVersion": {
+      "Assertions": [
+        {
+          "Assert": {
+            "Fn::Not": [
+              {
+                "Fn::Contains": [
+                  [
+                    "1",
+                    "2",
+                    "3",
+                    "4",
+                    "5"
+                  ],
+                  {
+                    "Ref": "BootstrapVersion"
+                  }
+                ]
+              }
+            ]
+          },
+          "AssertDescription": "CDK bootstrap stack version 6 required. Please run 'cdk bootstrap' with a recent version of the CDK CLI."
+        }
+      ]
+    }
+  }
+}
